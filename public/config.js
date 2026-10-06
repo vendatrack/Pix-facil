@@ -5,7 +5,7 @@
 // =========================================================
 var CONFIG = {
   nome: "Pix Fácil",
-  whatsapp: "5545999999999",            // 55 + DDD + número, só números
+  whatsapp: "5545998419131",            // 55 + DDD + número, só números
 
   // Conta no BRASIL — cliente paga em REAIS (gera QR Code PIX)
   br: {
@@ -18,9 +18,9 @@ var CONFIG = {
 
   // Conta no PARAGUAI — cliente paga em GUARANIS
   py: {
-    banco: "Nome do banco",
-    titular: "Seu nome",
-    conta: "000000000",
+    banco: "Verificar pelo whatsapp",
+    titular: "Verificar pelo whatsapp",
+    conta: "Verificar pelo whatsapp",
     doc: ""                             // CI/RUC
   }
 };

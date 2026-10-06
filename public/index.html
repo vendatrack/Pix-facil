@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pix Fácil · Real ⇄ Guarani</title>
+<meta name="description" content="Câmbio de real para guarani e de guarani para real.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💱</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rio:#0E4D45; --rio-2:#14695E; --papel:#F5F7F4; --tinta:#16231F; --suave:#5B6B66;
+  --linha:#D9E1DD; --cartao:#FFFFFF; --sol:#E9A23B; --ok:#1F7A4D; --erro:#B3362B;
+  --campo:#EEF2EF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --rio:#5CC2B0; --rio-2:#7BD3C3; --papel:#0F1715; --tinta:#E8EFEC; --suave:#9AABA5;
+  --linha:#25332F; --cartao:#16211E; --sol:#F0B456; --ok:#5FCB8F; --erro:#F08479; --campo:#1D2A27;
+}}
+:root[data-theme="dark"]{
+  --rio:#5CC2B0; --rio-2:#7BD3C3; --papel:#0F1715; --tinta:#E8EFEC; --suave:#9AABA5;
+  --linha:#25332F; --cartao:#16211E; --sol:#F0B456; --ok:#5FCB8F; --erro:#F08479; --campo:#1D2A27;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--papel);color:var(--tinta);
+  font-family:"Familjen Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:520px;margin:0 auto;padding:20px 18px 48px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.marca{font-weight:700;font-size:20px;letter-spacing:-.01em}
+.marca small{display:block;font-weight:500;font-size:13px;color:var(--suave);letter-spacing:0}
+.atual{font-size:13px;color:var(--suave);text-align:right}
+.atual b{color:var(--ok);font-weight:600}
+
+.conv{background:var(--cartao);border:1px solid var(--linha);border-radius:22px;padding:20px;
+  box-shadow:0 1px 0 var(--linha)}
+.modo{display:grid;grid-template-columns:1fr 1fr;background:var(--campo);border-radius:14px;padding:4px;gap:4px}
+.modo button{appearance:none;border:0;background:transparent;color:var(--suave);font:inherit;font-weight:600;
+  padding:11px 8px;border-radius:11px;cursor:pointer;font-size:16px}
+.modo button[aria-pressed="true"]{background:var(--cartao);color:var(--tinta);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+.moedas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 14px}
+.moeda{appearance:none;font:inherit;color:var(--tinta);display:flex;align-items:center;gap:10px;
+  border:2px solid var(--linha);background:transparent;border-radius:14px;padding:11px 12px;cursor:pointer;text-align:left}
+.moeda svg{width:38px;height:26px;border-radius:4px;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.moeda span{font-weight:600;line-height:1.15}
+.moeda span em{display:block;font-style:normal;font-weight:400;font-size:13px;color:var(--suave)}
+.moeda[aria-pressed="true"]{border-color:var(--rio);background:color-mix(in srgb,var(--rio) 8%,transparent)}
+
+.entrada{display:flex;align-items:baseline;gap:8px;border-bottom:2px solid var(--linha);padding:4px 2px 8px}
+.entrada:focus-within{border-color:var(--rio)}
+.entrada .sim{font-size:28px;font-weight:600;color:var(--suave)}
+.entrada input{flex:1;min-width:0;border:0;background:transparent;color:var(--tinta);font:inherit;
+  font-size:40px;font-weight:700;letter-spacing:-.02em;outline:none;padding:0}
+.rot{font-size:14px;color:var(--suave);margin:2px 0 6px}
+
+.resultado{margin-top:18px;background:var(--rio);color:#fff;border-radius:16px;padding:16px 18px}
+:root[data-theme="dark"] .resultado{color:#0F1715}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .resultado{color:#0F1715}}
+.resultado .r1{font-size:14px;opacity:.85}
+.resultado .r2{font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1.1;overflow-wrap:anywhere}
+.resultado .r3{font-size:14px;opacity:.85;margin-top:4px}
+
+.btn{appearance:none;border:0;font:inherit;font-weight:600;font-size:17px;cursor:pointer;border-radius:14px;
+  padding:15px 18px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.prim{background:var(--tinta);color:var(--papel);margin-top:14px}
+.btn.zap{background:#1FA855;color:#fff}
+.btn.sec{background:var(--campo);color:var(--tinta)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--sol);outline-offset:2px}
+
+.passos{margin-top:26px;display:none}
+.passos.on{display:block}
+.passo{display:grid;grid-template-columns:34px 1fr;gap:12px;margin-bottom:22px}
+.passo .n{width:30px;height:30px;border-radius:50%;background:var(--rio);color:var(--papel);display:grid;place-items:center;font-weight:700;font-size:15px}
+.passo h3{margin:3px 0 8px;font-size:18px}
+.passo p{margin:0 0 10px;color:var(--suave);font-size:15px}
+.dados{background:var(--cartao);border:1px solid var(--linha);border-radius:14px;overflow:hidden}
+.linha{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-top:1px solid var(--linha)}
+.linha:first-child{border-top:0}
+.linha div{min-width:0}
+.linha small{display:block;color:var(--suave);font-size:13px}
+.linha strong{display:block;font-weight:600;overflow-wrap:anywhere}
+.copiar{appearance:none;border:1px solid var(--linha);background:transparent;color:var(--rio);font:inherit;font-size:14px;font-weight:600;
+  border-radius:10px;padding:7px 11px;cursor:pointer;flex:none}
+.campo{display:block;margin-bottom:10px}
+.campo span{display:block;font-size:14px;color:var(--suave);margin-bottom:4px}
+.campo input,.campo textarea{width:100%;font:inherit;color:var(--tinta);background:var(--campo);border:1px solid var(--linha);
+  border-radius:12px;padding:12px 13px}
+.aviso{font-size:13px;color:var(--suave);margin-top:28px;text-align:center}
+.vazio{color:var(--erro);font-size:15px;margin-top:10px}
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="shell">
+<div class="wrap">
+  <header class="top">
+    <div class="marca" id="nomeNegocio"></div>
+    <div class="atual" id="atualizado"></div>
+  </header>
+
+  <section class="conv" aria-label="Simulador de câmbio">
+    <div class="modo" role="group" aria-label="O que você quer fazer">
+      <button type="button" data-modo="quero" aria-pressed="true">Eu quero</button>
+      <button type="button" data-modo="tenho" aria-pressed="false">Eu tenho</button>
+    </div>
+
+    <div class="moedas" role="group" aria-label="Moeda">
+      <button type="button" class="moeda" data-moeda="BRL" aria-pressed="true">
+        <svg viewBox="0 0 38 26" aria-hidden="true"><rect width="38" height="26" fill="#009C3B"/><path d="M19 3 35 13 19 23 3 13Z" fill="#FFDF00"/><circle cx="19" cy="13" r="5.6" fill="#002776"/><path d="M13.6 12.2c3.6-.9 7.6-.3 10.8 1.6" stroke="#fff" stroke-width="1" fill="none"/></svg>
+        <span>Real<em>Brasil</em></span>
+      </button>
+      <button type="button" class="moeda" data-moeda="PYG" aria-pressed="false">
+        <svg viewBox="0 0 38 26" aria-hidden="true"><rect width="38" height="26" fill="#fff"/><rect width="38" height="8.67" fill="#D52B1E"/><rect y="17.33" width="38" height="8.67" fill="#0038A8"/><circle cx="19" cy="13" r="3" fill="none" stroke="#0038A8" stroke-width=".9"/></svg>
+        <span>Guarani<em>Paraguai</em></span>
+      </button>
+    </div>
+
+    <div class="rot" id="rotEntrada">Quanto você quer receber</div>
+    <label class="entrada">
+      <span class="sim" id="simEntrada">R$</span>
+      <input id="valor" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-label="Valor">
+    </label>
+
+    <div class="resultado" aria-live="polite">
+      <div class="r1" id="rotResultado">Você envia</div>
+      <div class="r2 num" id="valResultado">—</div>
+      <div class="r3" id="obsResultado">Digite um valor para calcular</div>
+    </div>
+    <div class="vazio" id="semCotacao" hidden>Não conseguimos carregar a cotação agora.
+      <button type="button" class="btn zap" id="semCotacaoZap" style="margin-top:10px">Pedir cotação no WhatsApp</button></div>
+
+    <button type="button" class="btn prim" id="continuar" disabled>Fazer o câmbio</button>
+  </section>
+
+  <section class="passos" id="passos" aria-label="Como concluir">
+    <div class="passo">
+      <div class="n">1</div>
+      <div>
+        <h3 id="tituloEnvio">Transfira o valor</h3>
+        <p id="textoEnvio"></p>
+        <div class="dados" id="contaDestino"></div>
+      </div>
+    </div>
+    <div class="passo">
+      <div class="n">2</div>
+      <div>
+        <h3>Informe onde receber</h3>
+        <label class="campo"><span>Seu nome completo</span><input id="cliNome" autocomplete="name"></label>
+        <label class="campo"><span id="rotReceber">Sua chave PIX</span><textarea id="cliConta" rows="2"></textarea></label>
+      </div>
+    </div>
+    <div class="passo">
+      <div class="n">3</div>
+      <div>
+        <h3>Envie o comprovante</h3>
+        <p>Mande o comprovante da transferência pelo WhatsApp. O pedido já vai preenchido.</p>
+        <button type="button" class="btn zap" id="zap">Enviar comprovante no WhatsApp</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="aviso" id="aviso">Valores válidos para a cotação atual. Confirmamos tudo pelo WhatsApp antes de pagar.</p>
+</div>
+
+</template>
+
+<!-- =========================================================
+     EDITE AQUI os dados do seu negócio (no GitHub: abra este
+     arquivo, clique no lápis, altere e clique em "Commit changes")
+     A cotação e a taxa NÃO ficam aqui: vêm do servidor.
+     ========================================================= -->
+<script>
+var CONFIG = {
+  nome: "Pix Fácil",
+  whatsapp: "5545999999999",          // DDI + DDD + número, só números
+  br: {                                // cliente paga em REAIS
+    banco: "Nome do banco",
+    titular: "Seu nome",
+    pix: "sua-chave-pix",
+    doc: ""                            // CPF/CNPJ (opcional)
+  },
+  py: {                                // cliente paga em GUARANIS
+    banco: "Nome do banco",
+    titular: "Seu nome",
+    conta: "000000000",
+    doc: ""                            // CI/RUC
+  }
+};
+</script>
+
+<script>
+(function(){
+  var root = document.getElementById('root');
+  root.appendChild(document.getElementById('shell').content.cloneNode(true));
+  var $ = function(id){ return document.getElementById(id); };
+
+  var estado = { modo:'quero', moeda:'BRL', valor:0, resultado:null };
+  var COT = null; // { venda, compra, atualizado } já com a margem aplicada no servidor
+
+  function fmtBRL(v){ return 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmtPYG(v){ return '₲ ' + Math.round(v).toLocaleString('pt-BR'); }
+  function fmt(m,v){ return m==='BRL' ? fmtBRL(v) : fmtPYG(v); }
+  function parseValor(txt, moeda){
+    if(!txt) return 0;
+    if(moeda==='PYG') return Number(String(txt).replace(/\D/g,'')) || 0;
+    var s = String(txt).replace(/[^\d,\.]/g,'');
+    if(s.indexOf(',')>=0){ s = s.replace(/\./g,'').replace(',','.'); }
+    else if((s.match(/\./g)||[]).length>1 || /\.\d{3}$/.test(s)){ s = s.replace(/\./g,''); }
+    return Number(s) || 0;
+  }
+  // Cliente PAGA: arredonda para cima. Cliente RECEBE: para baixo.
+  function arred(m, v, cima){
+    if(m==='PYG') return cima ? Math.ceil(v/50)*50 : Math.floor(v/50)*50;
+    return cima ? Math.ceil(v*100-1e-9)/100 : Math.floor(v*100+1e-9)/100;
+  }
+  function calcular(modo, moeda, x){
+    if(!COT || !(x>0)) return null;
+    var v = COT.venda, c = COT.compra;
+    if(modo==='quero' && moeda==='BRL') return {envia:'PYG',recebe:'BRL',valEnvia:arred('PYG',x*v,true),valRecebe:x,outro:'PYG'};
+    if(modo==='tenho' && moeda==='BRL') return {envia:'BRL',recebe:'PYG',valEnvia:x,valRecebe:arred('PYG',x*c,false),outro:'PYG'};
+    if(modo==='quero' && moeda==='PYG') return {envia:'BRL',recebe:'PYG',valEnvia:arred('BRL',x/c,true),valRecebe:x,outro:'BRL'};
+    return {envia:'PYG',recebe:'BRL',valEnvia:x,valRecebe:arred('BRL',x/v,false),outro:'BRL'};
+  }
+
+  function pintarCabecalho(){
+    var n = $('nomeNegocio'); n.textContent = CONFIG.nome;
+    var s = document.createElement('small'); s.textContent = 'Real ⇄ Guarani'; n.appendChild(s);
+    document.title = CONFIG.nome + ' · Real ⇄ Guarani';
+    var a = $('atualizado'); a.textContent = '';
+    if(COT){
+      var b = document.createElement('b'); b.textContent = 'Cotação do dia';
+      a.append(b);
+      if(COT.atualizado){ a.append(document.createElement('br'), 'atualizada ' + COT.atualizado); }
+    } else if(COT === null && carregando){
+      a.textContent = 'Buscando cotação…';
+    }
+    $('semCotacao').hidden = !!COT || carregando;
+  }
+
+  function atualizar(){
+    var m = estado.modo, moeda = estado.moeda;
+    document.querySelectorAll('[data-modo]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.modo===m); });
+    document.querySelectorAll('[data-moeda]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.moeda===moeda); });
+    $('simEntrada').textContent = moeda==='BRL' ? 'R$' : '₲';
+    $('valor').placeholder = moeda==='BRL' ? '0,00' : '0';
+    $('valor').inputMode = moeda==='BRL' ? 'decimal' : 'numeric';
+    $('rotEntrada').textContent = m==='quero' ? 'Quanto você quer receber' : 'Quanto você tem para trocar';
+    $('rotResultado').textContent = m==='quero' ? 'Você envia' : 'Você recebe';
+
+    estado.valor = parseValor($('valor').value, moeda);
+    var r = calcular(m, moeda, estado.valor);
+    estado.resultado = r;
+    if(r){
+      $('valResultado').textContent = fmt(r.outro, m==='quero' ? r.valEnvia : r.valRecebe);
+      $('obsResultado').textContent = m==='quero' ? 'para receber ' + fmt(r.recebe, r.valRecebe) : 'trocando ' + fmt(r.envia, r.valEnvia);
+    } else {
+      $('valResultado').textContent = '—';
+      $('obsResultado').textContent = COT ? 'Digite um valor para calcular' : (carregando ? 'Buscando cotação…' : 'Cotação indisponível agora');
+      $('passos').classList.remove('on');
+    }
+    $('continuar').disabled = !r;
+    if($('passos').classList.contains('on')) pintarPassos();
+  }
+
+  function linhaDado(rotulo, valor, copiavel){
+    if(!valor) return null;
+    var l = document.createElement('div'); l.className='linha';
+    var d = document.createElement('div');
+    var s = document.createElement('small'); s.textContent = rotulo;
+    var st = document.createElement('strong'); st.textContent = valor;
+    d.append(s, st); l.appendChild(d);
+    if(copiavel){
+      var b = document.createElement('button'); b.type='button'; b.className='copiar'; b.textContent='Copiar';
+      b.addEventListener('click', function(){
+        var ok = function(){ b.textContent='Copiado'; setTimeout(function(){ b.textContent='Copiar'; },1500); };
+        if(navigator.clipboard){ navigator.clipboard.writeText(valor).then(ok, function(){ copiaManual(valor); ok(); }); }
+        else { copiaManual(valor); ok(); }
+      });
+      l.appendChild(b);
+    }
+    return l;
+  }
+  function copiaManual(t){
+    var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove();
+  }
+
+  function pintarPassos(){
+    var r = estado.resultado; if(!r) return;
+    var box = $('contaDestino'); box.innerHTML=''; var linhas;
+    if(r.envia==='BRL'){
+      $('tituloEnvio').textContent = 'Transfira ' + fmtBRL(r.valEnvia) + ' via PIX';
+      linhas = [ linhaDado('Valor', fmtBRL(r.valEnvia).replace('R$ ',''), true), linhaDado('Chave PIX', CONFIG.br.pix, true),
+        linhaDado('Titular', CONFIG.br.titular), linhaDado('Banco', CONFIG.br.banco), linhaDado('CPF/CNPJ', CONFIG.br.doc) ];
+      $('rotReceber').textContent = 'Onde receber os guaranis (banco, conta e CI)';
+    } else {
+      $('tituloEnvio').textContent = 'Transfira ' + fmtPYG(r.valEnvia);
+      linhas = [ linhaDado('Valor', String(Math.round(r.valEnvia)), true), linhaDado('Número da conta', CONFIG.py.conta, true),
+        linhaDado('Titular', CONFIG.py.titular), linhaDado('Banco', CONFIG.py.banco), linhaDado('CI/RUC', CONFIG.py.doc, true) ];
+      $('rotReceber').textContent = 'Sua chave PIX para receber os reais';
+    }
+    $('textoEnvio').textContent = 'Envie exatamente este valor para a conta abaixo.';
+    linhas.filter(Boolean).forEach(function(l){ box.appendChild(l); });
+  }
+
+  function abrirZap(msg){
+    window.open('https://wa.me/' + String(CONFIG.whatsapp).replace(/\D/g,'') + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+  }
+
+  document.querySelectorAll('[data-modo]').forEach(function(b){
+    b.addEventListener('click', function(){ estado.modo=b.dataset.modo; atualizar(); });
+  });
+  document.querySelectorAll('[data-moeda]').forEach(function(b){
+    b.addEventListener('click', function(){
+      if(estado.moeda!==b.dataset.moeda){ estado.moeda=b.dataset.moeda; $('valor').value=''; }
+      atualizar(); $('valor').focus();
+    });
+  });
+  $('valor').addEventListener('input', function(){
+    if(estado.moeda==='PYG'){ var n = parseValor(this.value,'PYG'); this.value = n ? n.toLocaleString('pt-BR') : ''; }
+    atualizar();
+  });
+  $('continuar').addEventListener('click', function(){
+    $('passos').classList.add('on'); pintarPassos();
+    $('passos').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto':'smooth', block:'start'});
+  });
+  $('zap').addEventListener('click', function(){
+    var r = estado.resultado; if(!r) return;
+    abrirZap('Olá! Quero fazer um câmbio.\n\nEnvio: ' + fmt(r.envia, r.valEnvia) + '\nRecebo: ' + fmt(r.recebe, r.valRecebe) +
+      '\n\nNome: ' + ($('cliNome').value.trim() || '-') + '\nReceber em: ' + ($('cliConta').value.trim() || '-') + '\n\nSegue o comprovante.');
+  });
+  $('semCotacaoZap').addEventListener('click', function(){ abrirZap('Olá! Quero fazer um câmbio de real/guarani. Qual a cotação agora?'); });
+
+  // ---------- cotação automática ----------
+  var carregando = true;
+  function buscarCotacao(){
+    fetch('/api/cotacao', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(d){
+      if(d && d.ok && d.venda > 0 && d.compra > 0){ COT = d; } else { COT = null; }
+    }).catch(function(){ COT = null; }).then(function(){
+      carregando = false; pintarCabecalho(); atualizar();
+    });
+  }
+  pintarCabecalho(); atualizar(); buscarCotacao();
+  setInterval(buscarCotacao, 5*60*1000);           // atualiza a cada 5 min com a página aberta
+})();
+</script>
+</body>
+</html>

@@ -1,7 +1,9 @@
 # Pix Fácil — câmbio Real ⇄ Guarani (Railway)
 
 ## Arquivos
-- `public/index.html` — o site. Edite o bloco `CONFIG` (nome, WhatsApp, contas).
+- `public/config.js` — **seus dados** (nome, WhatsApp, PIX, conta do Paraguai). Edite só este.
+- `public/index.html` — o site (não precisa mexer).
+- `public/qrcode.js` — gerador de QR Code (biblioteca MIT, não mexer).
 - `server.js` — servidor: entrega o site e lê a cotação da Cambios Chaco.
 - `package.json` — diz ao Railway como iniciar (`npm start`).
 

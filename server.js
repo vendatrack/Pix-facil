@@ -79,6 +79,7 @@ const SEGURANCA = {
 };
 
 const INDEX = path.join(__dirname, 'public', 'index.html');
+const ARQUIVOS_JS = { '/config.js': 'config.js', '/qrcode.js': 'qrcode.js' };
 
 function enviar(res, status, tipo, corpo, extra = {}) {
   res.writeHead(status, { ...SEGURANCA, 'Content-Type': tipo, ...extra });
@@ -101,6 +102,12 @@ http.createServer(async (req, res) => {
   }
 
   if (url.pathname === '/saude') return enviar(res, 200, 'text/plain; charset=utf-8', 'ok');
+
+  if (ARQUIVOS_JS[url.pathname]) {
+    return fs.readFile(path.join(__dirname, 'public', ARQUIVOS_JS[url.pathname]), (err, data) => err
+      ? enviar(res, 404, 'text/plain; charset=utf-8', 'Não encontrado')
+      : enviar(res, 200, 'application/javascript; charset=utf-8', data, { 'Cache-Control': 'no-cache' }));
+  }
 
   if (url.pathname === '/' || url.pathname === '/index.html') {
     return fs.readFile(INDEX, (err, data) => err

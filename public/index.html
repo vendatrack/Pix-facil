@@ -93,6 +93,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 .campo span{display:block;font-size:14px;color:var(--suave);margin-bottom:4px}
 .campo input,.campo textarea{width:100%;font:inherit;color:var(--tinta);background:var(--campo);border:1px solid var(--linha);
   border-radius:12px;padding:12px 13px}
+.qr{background:#fff;border:1px solid var(--linha);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center}
+.qr svg{width:100%;max-width:240px;height:auto;display:block;margin:0 auto}
+.qr p{color:#5B6B66;font-size:13px;margin:8px 0 0}
+.copiaecola{display:flex;gap:8px;align-items:stretch;margin-bottom:12px}
+.copiaecola code{flex:1;min-width:0;background:var(--campo);border:1px solid var(--linha);border-radius:12px;padding:10px 12px;
+  font-size:12px;line-height:1.4;overflow-wrap:anywhere;max-height:4.4em;overflow:hidden;color:var(--suave)}
+.btn.pix{background:var(--rio);color:var(--papel);margin-bottom:12px}
+.pedido{font-size:13px;color:var(--suave);margin:0 0 10px}
 .aviso{font-size:13px;color:var(--suave);margin-top:28px;text-align:center}
 .vazio{color:var(--erro);font-size:15px;margin-top:10px}
 
@@ -174,29 +182,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px soli
 
 </template>
 
-<!-- =========================================================
-     EDITE AQUI os dados do seu negócio (no GitHub: abra este
-     arquivo, clique no lápis, altere e clique em "Commit changes")
-     A cotação e a taxa NÃO ficam aqui: vêm do servidor.
-     ========================================================= -->
-<script>
-var CONFIG = {
-  nome: "Pix Fácil",
-  whatsapp: "5545999999999",          // DDI + DDD + número, só números
-  br: {                                // cliente paga em REAIS
-    banco: "Nome do banco",
-    titular: "Seu nome",
-    pix: "sua-chave-pix",
-    doc: ""                            // CPF/CNPJ (opcional)
-  },
-  py: {                                // cliente paga em GUARANIS
-    banco: "Nome do banco",
-    titular: "Seu nome",
-    conta: "000000000",
-    doc: ""                            // CI/RUC
-  }
-};
-</script>
+<script src="/config.js"></script>
+<script src="/qrcode.js"></script>
 
 <script>
 (function(){
@@ -272,7 +259,7 @@ var CONFIG = {
     if($('passos').classList.contains('on')) pintarPassos();
   }
 
-  function linhaDado(rotulo, valor, copiavel){
+  function linhaDado(rotulo, valor, copiavel, copiaValor){
     if(!valor) return null;
     var l = document.createElement('div'); l.className='linha';
     var d = document.createElement('div');
@@ -283,8 +270,8 @@ var CONFIG = {
       var b = document.createElement('button'); b.type='button'; b.className='copiar'; b.textContent='Copiar';
       b.addEventListener('click', function(){
         var ok = function(){ b.textContent='Copiado'; setTimeout(function(){ b.textContent='Copiar'; },1500); };
-        if(navigator.clipboard){ navigator.clipboard.writeText(valor).then(ok, function(){ copiaManual(valor); ok(); }); }
-        else { copiaManual(valor); ok(); }
+        if(navigator.clipboard){ navigator.clipboard.writeText(copiaValor||valor).then(ok, function(){ copiaManual(copiaValor||valor); ok(); }); }
+        else { copiaManual(copiaValor||valor); ok(); }
       });
       l.appendChild(b);
     }
@@ -295,13 +282,74 @@ var CONFIG = {
     document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove();
   }
 
+
+  // ---------- PIX: BR Code estático com valor (padrão EMV do Banco Central) ----------
+  function semAcento(s, max){
+    s = String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9 ]/g,' ')
+      .replace(/\s+/g,' ').trim().toUpperCase();
+    if(s.length > max){ s = s.slice(0, max+1); s = s.lastIndexOf(' ') > 0 ? s.slice(0, s.lastIndexOf(' ')) : s.slice(0, max); }
+    return s;
+  }
+  function campo(id, valor){ return id + String(valor.length).padStart(2,'0') + valor; }
+  function crc16(s){
+    var crc = 0xFFFF;
+    for(var i=0;i<s.length;i++){
+      crc ^= s.charCodeAt(i) << 8;
+      for(var j=0;j<8;j++){ crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1); crc &= 0xFFFF; }
+    }
+    return crc.toString(16).toUpperCase().padStart(4,'0');
+  }
+  function pixPayload(valor, txid){
+    var conta = campo('00','br.gov.bcb.pix') + campo('01', String(CONFIG.br.pix).trim());
+    var p = campo('00','01') + campo('26',conta) + campo('52','0000') + campo('53','986') +
+      campo('54', valor.toFixed(2)) + campo('58','BR') +
+      campo('59', semAcento(CONFIG.br.titular,25) || 'RECEBEDOR') +
+      campo('60', semAcento(CONFIG.br.cidade,15) || 'BRASIL') +
+      campo('62', campo('05', txid)) + '6304';
+    return p + crc16(p);
+  }
+  function novoPedido(){
+    var a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = 'PF';
+    var r = new Uint32Array(8); (window.crypto||window.msCrypto).getRandomValues(r);
+    for(var i=0;i<8;i++) s += a[r[i] % a.length];
+    return s;
+  }
+  function desenharQR(caixa, texto){
+    caixa.innerHTML = '';
+    if(typeof qrcode !== 'function') return false;
+    var q = qrcode(0,'M'); q.addData(texto); q.make();
+    caixa.innerHTML = q.createSvgTag({cellSize:4, margin:2, scalable:true});
+    return true;
+  }
+  function botaoCopiar(b, texto, rotulo, feito){
+    b.addEventListener('click', function(){
+      var ok = function(){ b.textContent = feito; setTimeout(function(){ b.textContent = rotulo; }, 1800); };
+      if(navigator.clipboard){ navigator.clipboard.writeText(texto).then(ok, function(){ copiaManual(texto); ok(); }); }
+      else { copiaManual(texto); ok(); }
+    });
+  }
+
   function pintarPassos(){
     var r = estado.resultado; if(!r) return;
     var box = $('contaDestino'); box.innerHTML=''; var linhas;
+    box.parentNode.querySelectorAll('.pedido,.qr,.btn.pix,.copiaecola').forEach(function(el){ el.remove(); });
     if(r.envia==='BRL'){
-      $('tituloEnvio').textContent = 'Transfira ' + fmtBRL(r.valEnvia) + ' via PIX';
-      linhas = [ linhaDado('Valor', fmtBRL(r.valEnvia).replace('R$ ',''), true), linhaDado('Chave PIX', CONFIG.br.pix, true),
-        linhaDado('Titular', CONFIG.br.titular), linhaDado('Banco', CONFIG.br.banco), linhaDado('CPF/CNPJ', CONFIG.br.doc) ];
+      $('tituloEnvio').textContent = 'Pague ' + fmtBRL(r.valEnvia) + ' no PIX';
+      var codigo = pixPayload(r.valEnvia, estado.pedido);
+      var pedido = document.createElement('p'); pedido.className = 'pedido'; pedido.textContent = 'Pedido ' + estado.pedido;
+      var qr = document.createElement('div'); qr.className = 'qr';
+      var desenho = document.createElement('div'); qr.appendChild(desenho);
+      var legenda = document.createElement('p'); legenda.textContent = 'Abra o app do banco, escolha Pix > Ler QR Code';
+      qr.appendChild(legenda);
+      var bt = document.createElement('button'); bt.type='button'; bt.className='btn pix'; bt.textContent='Copiar código Pix copia e cola';
+      botaoCopiar(bt, codigo, 'Copiar código Pix copia e cola', 'Código copiado');
+      var cc = document.createElement('div'); cc.className='copiaecola';
+      var code = document.createElement('code'); code.textContent = codigo; cc.appendChild(code);
+      box.before(pedido, qr, bt, cc);
+      if(!desenharQR(desenho, codigo)) qr.remove();
+      $('textoEnvio').textContent = 'O valor já vem preenchido. Confira o nome ' + CONFIG.br.titular + ' antes de confirmar.';
+      linhas = [ linhaDado('Chave PIX (CNPJ)', CONFIG.br.doc || CONFIG.br.pix, true, CONFIG.br.pix),
+        linhaDado('Titular', CONFIG.br.titular), linhaDado('Banco', CONFIG.br.banco) ];
       $('rotReceber').textContent = 'Onde receber os guaranis (banco, conta e CI)';
     } else {
       $('tituloEnvio').textContent = 'Transfira ' + fmtPYG(r.valEnvia);
@@ -309,7 +357,7 @@ var CONFIG = {
         linhaDado('Titular', CONFIG.py.titular), linhaDado('Banco', CONFIG.py.banco), linhaDado('CI/RUC', CONFIG.py.doc, true) ];
       $('rotReceber').textContent = 'Sua chave PIX para receber os reais';
     }
-    $('textoEnvio').textContent = 'Envie exatamente este valor para a conta abaixo.';
+    if(r.envia!=='BRL') $('textoEnvio').textContent = 'Envie exatamente este valor para a conta abaixo.';
     linhas.filter(Boolean).forEach(function(l){ box.appendChild(l); });
   }
 
@@ -331,12 +379,13 @@ var CONFIG = {
     atualizar();
   });
   $('continuar').addEventListener('click', function(){
+    estado.pedido = novoPedido();
     $('passos').classList.add('on'); pintarPassos();
     $('passos').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto':'smooth', block:'start'});
   });
   $('zap').addEventListener('click', function(){
     var r = estado.resultado; if(!r) return;
-    abrirZap('Olá! Quero fazer um câmbio.\n\nEnvio: ' + fmt(r.envia, r.valEnvia) + '\nRecebo: ' + fmt(r.recebe, r.valRecebe) +
+    abrirZap('Olá! Quero fazer um câmbio.\nPedido: ' + estado.pedido + '\n\nEnvio: ' + fmt(r.envia, r.valEnvia) + '\nRecebo: ' + fmt(r.recebe, r.valRecebe) +
       '\n\nNome: ' + ($('cliNome').value.trim() || '-') + '\nReceber em: ' + ($('cliConta').value.trim() || '-') + '\n\nSegue o comprovante.');
   });
   $('semCotacaoZap').addEventListener('click', function(){ abrirZap('Olá! Quero fazer um câmbio de real/guarani. Qual a cotação agora?'); });
